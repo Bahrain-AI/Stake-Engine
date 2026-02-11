@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback } from 'react';
 import { useThreeScene } from './hooks/useThreeScene.js';
 import { useGameState } from './hooks/useGameState.js';
 import HUD from './hud/HUD.jsx';
+import BonusBuyPanel from './hud/BonusBuyPanel.jsx';
 
 export default function App() {
   const containerRef = useRef(null);
@@ -16,6 +17,12 @@ export default function App() {
     setScene,
     sequencer,
     meterPercent,
+    bonusSpins,
+    bonusActive,
+    showBonusBuy,
+    setShowBonusBuy,
+    handleBonusBuy,
+    ehCrackActive,
   } = useGameState();
 
   // Wire scene manager to game state once scene is ready
@@ -53,6 +60,16 @@ export default function App() {
         betIndex={betIndex}
         onBetChange={setBetIndex}
         meterPercent={meterPercent}
+        bonusSpins={bonusSpins}
+        bonusActive={bonusActive}
+        onBonusBuy={() => setShowBonusBuy(true)}
+        ehCrackActive={ehCrackActive}
+      />
+      <BonusBuyPanel
+        visible={showBonusBuy}
+        betIndex={betIndex}
+        onBuy={handleBonusBuy}
+        onClose={() => setShowBonusBuy(false)}
       />
     </div>
   );

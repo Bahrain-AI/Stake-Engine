@@ -178,6 +178,39 @@ export class SceneManager {
     this.escalation.apply(this.meterLevel);
   }
 
+  /** Expand grid and symbols to 9×9 for bonus mode */
+  expandTo9x9() {
+    this.grid.expandTo9x9();
+    this.symbols.expandTo9x9();
+  }
+
+  /** Contract grid and symbols back to 7×7 */
+  contractTo7x7() {
+    this.grid.contractTo7x7();
+    this.symbols.contractTo7x7();
+    // Reset camera to base position
+    this.camera.position.z = CAMERA_POS_Z;
+    this.camera.fov = CAMERA_FOV;
+    this.camera.updateProjectionMatrix();
+  }
+
+  /** Reset lighting to base colors after bonus */
+  resetLighting() {
+    if (this.lighting) {
+      this.lighting.pointLight1.color.setHex(0x6b1fb1);
+      this.lighting.pointLight2.color.setHex(0x00d4ff);
+      this.lighting.pulseLight.color.setHex(0x6b1fb1);
+      this.lighting.ambient.intensity = 0.5;
+      this.lighting.pointLight1.intensity = 1.0;
+      this.lighting.pointLight2.intensity = 0.8;
+      this.lighting.pulseLight.intensity = 0.6;
+    }
+    if (this.bloomPass) {
+      this.bloomPass.strength = BLOOM_PARAMS.strength;
+      this.bloomPass.radius = BLOOM_PARAMS.radius;
+    }
+  }
+
   _onResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;

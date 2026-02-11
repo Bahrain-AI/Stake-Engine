@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { SYMBOL_TYPES, SYMBOL_KEYS, TOTAL_SYMBOL_WEIGHT, COLORS } from '../utils/constants.js';
-import { getActiveCells, distanceFromCenter } from '../utils/gridHelpers.js';
+import { SYMBOL_TYPES, SYMBOL_KEYS, TOTAL_SYMBOL_WEIGHT, COLORS, GRID_SIZE, GRID_SIZE_BONUS } from '../utils/constants.js';
+import { getActiveCells, distanceFromCenter, gridToWorld } from '../utils/gridHelpers.js';
 import { randomRange, weightedRandom } from '../utils/mathHelpers.js';
 
 // Pre-built geometry cache — created once, shared across all symbols
@@ -226,6 +226,102 @@ export class SymbolManager {
     oldMat.dispose();
 
     mesh.userData.symbolKey = newSymbolKey;
+  }
+
+  /** Current grid size (7 or 9) */
+  get gridSize() {
+    return this._gridSize || GRID_SIZE;
+  }
+
+  /**
+   * Expand symbol pool from 7×7 to 9×9.
+   * Creates new meshes for the additional cells.
+   */
+  expandTo9x9() {
+    this._gridSize = GRID_SIZE_BONUS;
+    const newCells = getActiveCells(GRID_SIZE_BONUS);
+
+    // Find cells not already in current pool
+    const existingKeys = new Set(this.symbols.map((s) => `${s.userData.row},${s.userData.col}`));
+
+    for (const cell of newCells) {
+      const key = `${cell.row},${cell.col}`;
+      if (existingKeys.has(key)) {
+        // Update base positions for existing symbols (grid offset changes with size)
+        const mesh = this._cellMap.get(key);
+        if (mesh) {
+          mesh.userData.baseX = cell.worldX;
+          mesh.userData.baseY = cell.worldY;
+          mesh.userData.baseZ = cell.worldZ;
+          mesh.position.set(cell.worldX, cell.worldY, cell.worldZ);
+        }
+        continue;
+      }
+
+      // Create new symbol mesh
+      const symbolKey = pickRandomSymbol();
+      const symbolType = SYMBOL_TYPES[symbolKey];
+      const geometry = getOrCreateGeometry(symbolType);
+      const material = createMaterial(symbolType);
+      const mesh = new THREE.Mesh(geometry, material);
+
+      const dist = distanceFromCenter(cell.worldX, cell.worldY);
+      mesh.userData = {
+        symbolKey,
+        row: cell.row,
+        col: cell.col,
+        baseX: cell.worldX,
+        baseY: cell.worldY,
+        baseZ: cell.worldZ,
+        distFromCenter: dist || 1,
+        orbitSpeed: randomRange(0.5, 1.5),
+        phase: randomRange(0, Math.PI * 2),
+      };
+
+      mesh.position.set(cell.worldX, cell.worldY, cell.worldZ);
+      this.group.add(mesh);
+      this.symbols.push(mesh);
+    }
+
+    this.activeCells = newCells;
+    this.rebuildCellMap();
+  }
+
+  /**
+   * Contract symbol pool from 9×9 back to 7×7.
+   * Removes meshes for cells outside the 7×7 grid.
+   */
+  contractTo7x7() {
+    this._gridSize = GRID_SIZE;
+    const validCells = new Set(
+      getActiveCells(GRID_SIZE).map((c) => `${c.row},${c.col}`)
+    );
+
+    // Remove symbols not in 7×7
+    for (let i = this.symbols.length - 1; i >= 0; i--) {
+      const sym = this.symbols[i];
+      const key = `${sym.userData.row},${sym.userData.col}`;
+      if (!validCells.has(key)) {
+        sym.material.dispose();
+        this.group.remove(sym);
+        this.symbols.splice(i, 1);
+      }
+    }
+
+    // Update base positions (grid offset changes back)
+    const cells7x7 = getActiveCells(GRID_SIZE);
+    for (const cell of cells7x7) {
+      const mesh = this._cellMap.get(`${cell.row},${cell.col}`);
+      if (mesh) {
+        mesh.userData.baseX = cell.worldX;
+        mesh.userData.baseY = cell.worldY;
+        mesh.userData.baseZ = cell.worldZ;
+        mesh.position.set(cell.worldX, cell.worldY, cell.worldZ);
+      }
+    }
+
+    this.activeCells = cells7x7;
+    this.rebuildCellMap();
   }
 
   update(time, delta, meterLevel) {

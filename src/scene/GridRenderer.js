@@ -1,38 +1,50 @@
 import * as THREE from 'three';
-import { GRID_SIZE, CELL_SPACING, COLORS, SYMBOL_PLANE_Z } from '../utils/constants.js';
+import { GRID_SIZE, GRID_SIZE_BONUS, CELL_SPACING, COLORS, SYMBOL_PLANE_Z } from '../utils/constants.js';
 import { isVoidCore, gridToWorld } from '../utils/gridHelpers.js';
 
 export class GridRenderer {
   constructor(scene) {
+    this.scene = scene;
     this.group = new THREE.Group();
     this.group.name = 'GridGroup';
     scene.add(this.group);
 
-    this._createGridFrame();
-    this._createVoidCoreMask();
+    this._currentGridSize = GRID_SIZE;
+    this._buildGrid(GRID_SIZE);
   }
 
-  _createGridFrame() {
-    const spacing = CELL_SPACING;
-    const offset = ((GRID_SIZE - 1) * spacing) / 2;
-    const half = spacing / 2;
-    const z = SYMBOL_PLANE_Z - 0.1; // slightly behind symbols
+  _buildGrid(gridSize) {
+    // Clear existing
+    while (this.group.children.length > 0) {
+      const child = this.group.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      this.group.remove(child);
+    }
 
-    // Grid boundaries: from first cell edge to last cell edge
+    this._currentGridSize = gridSize;
+    this._createGridFrame(gridSize);
+    this._createVoidCoreMask(gridSize);
+  }
+
+  _createGridFrame(gridSize) {
+    const spacing = CELL_SPACING;
+    const offset = ((gridSize - 1) * spacing) / 2;
+    const half = spacing / 2;
+    const z = SYMBOL_PLANE_Z - 0.1;
+
     const minEdge = -offset - half;
     const maxEdge = offset + half;
 
     const vertices = [];
 
-    // Horizontal lines (8 lines for 7 rows)
-    for (let row = 0; row <= GRID_SIZE; row++) {
+    for (let row = 0; row <= gridSize; row++) {
       const y = -(row * spacing - offset - half);
       vertices.push(minEdge, y, z);
       vertices.push(maxEdge, y, z);
     }
 
-    // Vertical lines (8 lines for 7 cols)
-    for (let col = 0; col <= GRID_SIZE; col++) {
+    for (let col = 0; col <= gridSize; col++) {
       const x = col * spacing - offset - half;
       vertices.push(x, -minEdge, z);
       vertices.push(x, -maxEdge, z);
@@ -56,10 +68,11 @@ export class GridRenderer {
     this.group.add(this.gridFrame);
   }
 
-  _createVoidCoreMask() {
-    // Visual indicator for the 4 void core cells — subtle dark overlay
+  _createVoidCoreMask(gridSize) {
     const spacing = CELL_SPACING;
-    const size = spacing * 2; // 2×2 cells
+    // 7×7: 2×2 void core, 9×9: 3×3 void core
+    const coreSize = gridSize === GRID_SIZE ? 2 : 3;
+    const size = spacing * coreSize;
 
     const geometry = new THREE.PlaneGeometry(size, size);
     const material = new THREE.MeshBasicMaterial({
@@ -70,10 +83,12 @@ export class GridRenderer {
     });
 
     this.voidCoreMask = new THREE.Mesh(geometry, material);
-    // Center of the 4 void core cells (3,3), (3,4), (4,3), (4,4)
-    // gridToWorld gives positions with row 0 at top
-    const tl = gridToWorld(3, 3);
-    const br = gridToWorld(4, 4);
+
+    // Center of void core
+    const coreStart = gridSize === GRID_SIZE ? 3 : 3;
+    const coreEnd = gridSize === GRID_SIZE ? 4 : 5;
+    const tl = gridToWorld(coreStart, coreStart, gridSize);
+    const br = gridToWorld(coreEnd, coreEnd, gridSize);
     this.voidCoreMask.position.set(
       (tl.x + br.x) / 2,
       (tl.y + br.y) / 2,
@@ -83,15 +98,24 @@ export class GridRenderer {
     this.group.add(this.voidCoreMask);
   }
 
+  /** Rebuild grid for 9×9 bonus mode */
+  expandTo9x9() {
+    this._buildGrid(GRID_SIZE_BONUS);
+  }
+
+  /** Rebuild grid for 7×7 base mode */
+  contractTo7x7() {
+    this._buildGrid(GRID_SIZE);
+  }
+
   update(time, delta, meterLevel) {
-    // Grid frame pulsing opacity
+    if (!this.gridFrame) return;
     const baseOpacity = 0.2 + meterLevel * 0.15;
     const pulse = Math.sin(time * 1.5) * 0.08;
     this.gridFrame.material.opacity = baseOpacity + pulse;
 
-    // Grid brightens with meter
     if (meterLevel > 0.5) {
-      const brighten = (meterLevel - 0.5) * 2; // 0-1 over 50-100%
+      const brighten = (meterLevel - 0.5) * 2;
       this.gridFrame.material.opacity += brighten * 0.15;
     }
   }
