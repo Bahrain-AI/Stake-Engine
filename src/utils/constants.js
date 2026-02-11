@@ -163,6 +163,8 @@ export const GAME_STATES = {
   RESOLVING: 'RESOLVING',
   CASCADING: 'CASCADING',
   WIN_DISPLAY: 'WIN_DISPLAY',
+  EVENT_HORIZON: 'EVENT_HORIZON',
+  BONUS_ACTIVE: 'BONUS_ACTIVE',
 };
 
 // Cluster detection
@@ -192,4 +194,25 @@ export const ANIM = {
   WIN_ABSORB: 0.5,
   CASCADE_DRIFT: 0.5,
   CASCADE_SPAWN: 0.3,
+  // Event Horizon cinematic stages
+  EH_CHARGE: 0.5,
+  EH_CRACK: 1.0,
+  EH_COLLAPSE: 0.8,
+  EH_SILENCE: 0.5,
+  EH_REBIRTH: 1.5,
+};
+
+// Bonus mode
+export const BONUS = {
+  MAX_SPINS: 20,
+  VOID_ABSORPTION_RATE: 0.15,
+  SCATTER_RETRIGGER_COUNT: 2,
+  SCATTER_RETRIGGER_SPINS: 3,
+};
+
+// Bonus Buy tiers
+export const BONUS_BUY = {
+  ANOMALY: { name: 'Anomaly', costMultiplier: 25, accent: 0x6b1fb1, description: '3 cascades + 2 multiplier bubbles' },
+  COLLAPSE: { name: 'Collapse', costMultiplier: 75, accent: 0x00d4ff, description: 'Meter set to 75% + 5 WILDs placed' },
+  SINGULARITY: { name: 'Singularity', costMultiplier: 150, accent: 0xff006e, description: 'Instant Event Horizon bonus mode' },
 };

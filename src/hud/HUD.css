@@ -20,6 +20,40 @@
   backdrop-filter: blur(4px);
 }
 
+/* Top-left icon buttons (mute, info) */
+.top-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 15;
+}
+.hud-icon-btn {
+  width: 40px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(107, 31, 177, 0.7);
+  background: rgba(26, 10, 46, 0.5);
+  border: 1px solid rgba(107, 31, 177, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+.hud-icon-btn:hover {
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.4);
+  background: rgba(26, 10, 46, 0.7);
+}
+
 /* Title Bar */
 .title-bar {
   position: absolute;
@@ -217,8 +251,257 @@
 .message-bar.win { color: #00d4ff; }
 .message-bar.no-win { color: rgba(107, 31, 177, 0.5); }
 
+/* Singularity Meter — left side vertical bar */
+.singularity-meter {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  min-width: 52px;
+}
+.meter-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 8px;
+  color: #00d4ff;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.meter-track {
+  position: relative;
+  width: 8px;
+  height: 180px;
+  background: rgba(26, 10, 46, 0.8);
+  border: 1px solid rgba(107, 31, 177, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.meter-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  transition: height 0.5s ease, background 0.5s ease, box-shadow 0.5s ease;
+}
+.meter-fill.level-0 {
+  background: linear-gradient(to top, #1a0a2e, #6b1fb1);
+}
+.meter-fill.level-1 {
+  background: linear-gradient(to top, #6b1fb1, #00d4ff);
+}
+.meter-fill.level-2 {
+  background: linear-gradient(to top, #6b1fb1, #00d4ff);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+.meter-fill.level-3 {
+  background: linear-gradient(to top, #ff006e, #ff4466);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+  animation: meterPulse 0.5s infinite alternate;
+}
+@keyframes meterPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 0, 110, 0.4); }
+  100% { box-shadow: 0 0 20px rgba(255, 0, 110, 0.8); }
+}
+.meter-thresholds {
+  position: absolute;
+  top: 0;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  pointer-events: none;
+}
+.meter-tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(107, 31, 177, 0.5);
+}
+.meter-tick.t25 { bottom: 25%; }
+.meter-tick.t50 { bottom: 50%; }
+.meter-tick.t75 { bottom: 75%; }
+.meter-percent {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 8px;
+  transition: color 0.5s ease;
+}
+.meter-percent.level-0 { color: #6b1fb1; }
+.meter-percent.level-1 { color: #00d4ff; }
+.meter-percent.level-2 { color: #00d4ff; }
+.meter-percent.level-3 { color: #ff006e; }
+
+/* Bonus HUD — spins remaining + Event Horizon screen crack overlay */
+.bonus-indicator {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+.bonus-indicator .bonus-label {
+  font-size: 10px;
+  color: #ff006e;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+}
+.bonus-indicator .bonus-spins {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ff006e;
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.6);
+  margin-top: 4px;
+}
+
+.bonus-buy-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff006e;
+  background: rgba(26, 10, 46, 0.6);
+  border: 1px solid rgba(255, 0, 110, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+.bonus-buy-btn:hover {
+  background: rgba(255, 0, 110, 0.15);
+  border-color: rgba(255, 0, 110, 0.7);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+}
+
+/* Event Horizon screen crack overlay */
+.eh-crack-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 20;
+  background: radial-gradient(circle at center, transparent 20%, rgba(255, 0, 110, 0.1) 60%, rgba(255, 0, 110, 0.3) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.eh-crack-overlay.active {
+  opacity: 1;
+  animation: crackFlash 0.15s infinite alternate;
+}
+@keyframes crackFlash {
+  0% { background: radial-gradient(circle at center, transparent 15%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 0, 110, 0.15) 100%); }
+  100% { background: radial-gradient(circle at center, transparent 10%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 0, 110, 0.3) 100%); }
+}
+
+/* Bonus Buy Panel */
+.bonus-buy-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+}
+.bonus-buy-panel {
+  text-align: center;
+  padding: 32px 24px;
+  max-width: 600px;
+  width: 90%;
+}
+.bonus-buy-title {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #fff;
+  text-shadow: 0 0 25px rgba(255, 0, 110, 0.5);
+  margin-bottom: 4px;
+}
+.bonus-buy-subtitle {
+  font-size: 9px;
+  color: #6b1fb1;
+  letter-spacing: 4px;
+  margin-bottom: 28px;
+}
+.bonus-buy-cards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.bonus-card {
+  flex: 1;
+  min-width: 140px;
+  max-width: 180px;
+  padding: 20px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-width: 2px;
+}
+.bonus-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 25px rgba(107, 31, 177, 0.4);
+}
+.bonus-card .card-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.bonus-card .card-cost {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.bonus-card .card-multiplier {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.bonus-card .card-desc {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+}
+.bonus-buy-close {
+  margin-top: 24px;
+  padding: 8px 24px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.bonus-buy-close:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 /* Mobile adaptations */
 @media (max-width: 640px) {
+  .top-controls { top: 10px; left: 10px; gap: 6px; }
+  .hud-icon-btn { width: 34px; height: 24px; font-size: 7px; }
   .title-bar h1 { font-size: 22px; letter-spacing: 6px; }
   .title-bar .subtitle { font-size: 7px; letter-spacing: 4px; }
   .combo-counter { right: 8px; padding: 10px 8px; min-width: 50px; }
@@ -228,4 +511,7 @@
   .bet-display, .win-display { min-width: 80px; padding: 8px 12px; }
   .bet-display .value, .win-display .value { font-size: 14px; }
   .message-bar { font-size: 10px; bottom: 75px; }
+  .singularity-meter { left: 8px; padding: 8px 4px; min-width: 40px; }
+  .meter-track { height: 120px; }
+  .meter-percent { font-size: 10px; }
 }

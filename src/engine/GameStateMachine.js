@@ -2,7 +2,8 @@ import { GAME_STATES } from '../utils/constants.js';
 
 /**
  * Game State Machine
- * States: IDLE → SPINNING → RESOLVING → CASCADING → WIN_DISPLAY → IDLE
+ * Base: IDLE → SPINNING → RESOLVING → CASCADING → WIN_DISPLAY → IDLE
+ * Bonus: IDLE → EVENT_HORIZON → BONUS_ACTIVE (loops SPINNING→...→WIN_DISPLAY) → IDLE
  */
 export class GameStateMachine {
   constructor() {
@@ -16,6 +17,10 @@ export class GameStateMachine {
 
   get isIdle() {
     return this.state === GAME_STATES.IDLE;
+  }
+
+  get isBonus() {
+    return this.state === GAME_STATES.BONUS_ACTIVE;
   }
 
   onChange(fn) {
@@ -34,7 +39,7 @@ export class GameStateMachine {
   }
 
   startSpin() {
-    if (this.state !== GAME_STATES.IDLE) return false;
+    if (this.state !== GAME_STATES.IDLE && this.state !== GAME_STATES.BONUS_ACTIVE) return false;
     this._transition(GAME_STATES.SPINNING);
     return true;
   }
@@ -51,7 +56,6 @@ export class GameStateMachine {
 
   cascadeComplete() {
     if (this.state !== GAME_STATES.CASCADING) return;
-    // Go back to resolving to re-check for clusters
     this._transition(GAME_STATES.RESOLVING);
   }
 
@@ -60,7 +64,15 @@ export class GameStateMachine {
     this._transition(GAME_STATES.WIN_DISPLAY);
   }
 
-  returnToIdle() {
-    this._transition(GAME_STATES.IDLE);
+  startEventHorizon() {
+    this._transition(GAME_STATES.EVENT_HORIZON);
+  }
+
+  enterBonus() {
+    this._transition(GAME_STATES.BONUS_ACTIVE);
+  }
+
+  returnToIdle(inBonus = false) {
+    this._transition(inBonus ? GAME_STATES.BONUS_ACTIVE : GAME_STATES.IDLE);
   }
 }

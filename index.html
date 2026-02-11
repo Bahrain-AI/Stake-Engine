@@ -2,9 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>VOID BREAK</title>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body, #root {
         width: 100%;
@@ -12,9 +13,68 @@
         overflow: hidden;
         background: #0a0014;
       }
+      /* Loading screen — visible until React mounts and Three.js inits */
+      #loading-screen {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #0a0014;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.8s ease;
+      }
+      #loading-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #loading-screen h1 {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: 12px;
+        color: #fff;
+        text-shadow: 0 0 30px rgba(107, 31, 177, 0.6), 0 0 60px rgba(0, 212, 255, 0.3);
+        animation: loadPulse 2s infinite ease-in-out;
+      }
+      #loading-screen .loading-sub {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: #6b1fb1;
+        letter-spacing: 6px;
+        margin-top: 12px;
+      }
+      #loading-screen .loading-bar {
+        width: 120px;
+        height: 2px;
+        background: rgba(107, 31, 177, 0.2);
+        border-radius: 1px;
+        margin-top: 24px;
+        overflow: hidden;
+      }
+      #loading-screen .loading-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6b1fb1, #00d4ff);
+        animation: loadBar 1.5s infinite ease-in-out;
+      }
+      @keyframes loadPulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+      }
+      @keyframes loadBar {
+        0% { width: 0%; margin-left: 0%; }
+        50% { width: 60%; margin-left: 20%; }
+        100% { width: 0%; margin-left: 100%; }
+      }
     </style>
   </head>
   <body>
+    <div id="loading-screen">
+      <h1>VOID BREAK</h1>
+      <div class="loading-sub">GRAVITATIONAL SLOT EXPERIENCE</div>
+      <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

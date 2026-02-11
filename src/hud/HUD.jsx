@@ -6,9 +6,24 @@ import './HUD.css';
  * HUD overlay — HTML/CSS over the Three.js canvas.
  * All game state displayed here, imperative updates from game loop.
  */
-export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex, onBetChange }) {
+export default function HUD({
+  gameState,
+  onSpin,
+  comboCount,
+  winAmount,
+  betIndex,
+  onBetChange,
+  meterPercent = 0,
+  bonusSpins = 0,
+  bonusActive = false,
+  onBonusBuy,
+  ehCrackActive = false,
+  muted = false,
+  onMuteToggle,
+  onShowPaytable,
+}) {
   const betAmount = BET_LEVELS[betIndex] || BET_LEVELS[DEFAULT_BET_INDEX];
-  const isIdle = gameState === GAME_STATES.IDLE;
+  const isIdle = gameState === GAME_STATES.IDLE || gameState === GAME_STATES.BONUS_ACTIVE;
   const isSpinning = gameState === GAME_STATES.SPINNING;
   const [comboBounce, setComboBounce] = useState(false);
   const prevCombo = useRef(0);
@@ -25,19 +40,22 @@ export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex
   }, [comboCount]);
 
   const handleBetClick = useCallback(() => {
-    if (!isIdle) return;
+    if (!isIdle || bonusActive) return;
     const next = (betIndex + 1) % BET_LEVELS.length;
     onBetChange(next);
-  }, [isIdle, betIndex, onBetChange]);
+  }, [isIdle, bonusActive, betIndex, onBetChange]);
 
   const handleSpin = useCallback(() => {
     if (isIdle) onSpin();
   }, [isIdle, onSpin]);
 
   // Message text
-  let messageText = 'CLICK ANYWHERE TO SPIN';
+  let messageText = bonusActive ? 'CLICK TO SPIN' : 'CLICK ANYWHERE TO SPIN';
   let messageClass = 'idle';
-  if (gameState === GAME_STATES.SPINNING) {
+  if (gameState === GAME_STATES.EVENT_HORIZON) {
+    messageText = 'EVENT HORIZON';
+    messageClass = 'win';
+  } else if (gameState === GAME_STATES.SPINNING) {
     messageText = 'SCANNING FREQUENCIES...';
     messageClass = 'spinning';
   } else if (gameState === GAME_STATES.RESOLVING || gameState === GAME_STATES.CASCADING) {
@@ -61,10 +79,57 @@ export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex
 
   return (
     <div className="hud">
+      {/* Event Horizon screen crack overlay */}
+      <div className={`eh-crack-overlay ${ehCrackActive ? 'active' : ''}`} />
+
+      {/* Top-left controls */}
+      <div className="top-controls">
+        <button className="hud-icon-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
+          {muted ? 'OFF' : 'SFX'}
+        </button>
+        <button className="hud-icon-btn" onClick={onShowPaytable} title="Paytable">
+          INFO
+        </button>
+      </div>
+
       {/* Title */}
       <div className="title-bar">
         <h1>VOID BREAK</h1>
         <div className="subtitle">GRAVITATIONAL SLOT EXPERIENCE</div>
+      </div>
+
+      {/* Bonus Buy button (only in base game idle) */}
+      {!bonusActive && gameState === GAME_STATES.IDLE && (
+        <button className="bonus-buy-btn" onClick={onBonusBuy}>
+          BONUS BUY
+        </button>
+      )}
+
+      {/* Bonus spins indicator */}
+      {bonusActive && (
+        <div className="bonus-indicator">
+          <div className="bonus-label">EVENT HORIZON</div>
+          <div className="bonus-spins">{bonusSpins} SPINS</div>
+        </div>
+      )}
+
+      {/* Singularity Meter — left side */}
+      <div className="singularity-meter void-panel">
+        <div className="meter-label">SINGULARITY</div>
+        <div className="meter-track">
+          <div
+            className={`meter-fill level-${meterPercent >= 0.75 ? 3 : meterPercent >= 0.5 ? 2 : meterPercent >= 0.25 ? 1 : 0}`}
+            style={{ height: `${meterPercent * 100}%` }}
+          />
+          <div className="meter-thresholds">
+            <div className="meter-tick t25" />
+            <div className="meter-tick t50" />
+            <div className="meter-tick t75" />
+          </div>
+        </div>
+        <div className={`meter-percent level-${meterPercent >= 0.75 ? 3 : meterPercent >= 0.5 ? 2 : meterPercent >= 0.25 ? 1 : 0}`}>
+          {Math.round(meterPercent * 100)}%
+        </div>
       </div>
 
       {/* Combo Counter */}
@@ -95,7 +160,7 @@ export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex
           onClick={handleSpin}
           disabled={!isIdle}
         >
-          SPIN
+          {bonusActive ? 'FREE' : 'SPIN'}
         </button>
 
         <div className="win-display void-panel">
