@@ -131,8 +131,52 @@ export class SymbolManager {
 
     this.symbols = []; // array of THREE.Mesh references
     this.activeCells = getActiveCells();
+    this.animating = false; // true during animations — skips drift update
+    this._cellMap = new Map(); // "row,col" → mesh
 
     this._createSymbolPool();
+    this.rebuildCellMap();
+  }
+
+  /** Rebuild the cell→mesh lookup map */
+  rebuildCellMap() {
+    this._cellMap.clear();
+    for (const sym of this.symbols) {
+      this._cellMap.set(`${sym.userData.row},${sym.userData.col}`, sym);
+    }
+  }
+
+  /** Get mesh at specific grid position */
+  getMeshAt(row, col) {
+    return this._cellMap.get(`${row},${col}`) || null;
+  }
+
+  /** Get current grid state as 2D array */
+  getGridState(gridSize = 7) {
+    const grid = [];
+    for (let r = 0; r < gridSize; r++) {
+      grid[r] = [];
+      for (let c = 0; c < gridSize; c++) {
+        const mesh = this.getMeshAt(r, c);
+        grid[r][c] = mesh ? mesh.userData.symbolKey : null;
+      }
+    }
+    return grid;
+  }
+
+  /** Apply a full grid state to the symbol pool (for spin results) */
+  applyGrid(grid) {
+    for (const sym of this.symbols) {
+      const d = sym.userData;
+      const newKey = grid[d.row]?.[d.col];
+      if (newKey && newKey !== d.symbolKey) {
+        this.reassignSymbol(sym, newKey);
+      }
+      sym.visible = true;
+      sym.scale.set(1, 1, 1);
+      sym.material.opacity = 0.9;
+    }
+    this.rebuildCellMap();
   }
 
   _createSymbolPool() {
@@ -171,31 +215,26 @@ export class SymbolManager {
   reassignSymbol(mesh, newSymbolKey) {
     const symbolType = SYMBOL_TYPES[newSymbolKey];
     const newGeo = getOrCreateGeometry(symbolType);
-    const oldGeo = mesh.geometry;
 
-    // Only swap geometry if it changed
     if (mesh.geometry !== newGeo) {
       mesh.geometry = newGeo;
     }
 
-    // Update material properties
-    if (symbolType.id === 'SCATTER') {
-      mesh.material.color.setHex(symbolType.color);
-      mesh.material.emissive = undefined;
-    } else if (symbolType.id === 'WILD') {
-      mesh.material.color.setHex(COLORS.PURE_BLACK);
-      mesh.material.emissive.setHex(symbolType.emissive);
-    } else {
-      mesh.material.color.setHex(symbolType.color);
-      mesh.material.emissive.setHex(symbolType.emissive);
-    }
+    // Replace material entirely to avoid MeshBasic↔MeshPhong issues
+    const oldMat = mesh.material;
+    mesh.material = createMaterial(symbolType);
+    oldMat.dispose();
 
     mesh.userData.symbolKey = newSymbolKey;
   }
 
   update(time, delta, meterLevel) {
+    // Skip drift when animations are controlling positions
+    if (this.animating) return;
+
     for (let i = 0; i < this.symbols.length; i++) {
       const sym = this.symbols[i];
+      if (!sym.visible) continue;
       const d = sym.userData;
 
       // Rotation (unique per symbol)
