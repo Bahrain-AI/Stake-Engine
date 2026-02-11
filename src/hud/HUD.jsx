@@ -1,0 +1,110 @@
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { GAME_STATES, BET_LEVELS, DEFAULT_BET_INDEX } from '../utils/constants.js';
+import './HUD.css';
+
+/**
+ * HUD overlay — HTML/CSS over the Three.js canvas.
+ * All game state displayed here, imperative updates from game loop.
+ */
+export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex, onBetChange }) {
+  const betAmount = BET_LEVELS[betIndex] || BET_LEVELS[DEFAULT_BET_INDEX];
+  const isIdle = gameState === GAME_STATES.IDLE;
+  const isSpinning = gameState === GAME_STATES.SPINNING;
+  const [comboBounce, setComboBounce] = useState(false);
+  const prevCombo = useRef(0);
+
+  // Combo bounce animation trigger
+  useEffect(() => {
+    if (comboCount > prevCombo.current && comboCount > 0) {
+      setComboBounce(true);
+      const timer = setTimeout(() => setComboBounce(false), 250);
+      prevCombo.current = comboCount;
+      return () => clearTimeout(timer);
+    }
+    prevCombo.current = comboCount;
+  }, [comboCount]);
+
+  const handleBetClick = useCallback(() => {
+    if (!isIdle) return;
+    const next = (betIndex + 1) % BET_LEVELS.length;
+    onBetChange(next);
+  }, [isIdle, betIndex, onBetChange]);
+
+  const handleSpin = useCallback(() => {
+    if (isIdle) onSpin();
+  }, [isIdle, onSpin]);
+
+  // Message text
+  let messageText = 'CLICK ANYWHERE TO SPIN';
+  let messageClass = 'idle';
+  if (gameState === GAME_STATES.SPINNING) {
+    messageText = 'SCANNING FREQUENCIES...';
+    messageClass = 'spinning';
+  } else if (gameState === GAME_STATES.RESOLVING || gameState === GAME_STATES.CASCADING) {
+    if (comboCount > 0) {
+      messageText = `CASCADE \u00D7${comboCount}`;
+      messageClass = 'win';
+      if (comboCount >= 3) messageText += ' \u2014 GRAVITATIONAL SURGE';
+    } else {
+      messageText = 'RESOLVING...';
+      messageClass = 'spinning';
+    }
+  } else if (gameState === GAME_STATES.WIN_DISPLAY) {
+    if (winAmount > 0) {
+      messageText = `WIN $${winAmount.toFixed(2)}`;
+      messageClass = 'win';
+    } else {
+      messageText = 'VOID SILENCE...';
+      messageClass = 'no-win';
+    }
+  }
+
+  return (
+    <div className="hud">
+      {/* Title */}
+      <div className="title-bar">
+        <h1>VOID BREAK</h1>
+        <div className="subtitle">GRAVITATIONAL SLOT EXPERIENCE</div>
+      </div>
+
+      {/* Combo Counter */}
+      <div className="combo-counter void-panel">
+        <div className="combo-label">COMBO</div>
+        <div className={`combo-value ${comboCount > 0 ? 'active' : 'inactive'} ${comboBounce ? 'bounce' : ''}`}>
+          {'\u00D7'}{comboCount}
+        </div>
+        <div className={`combo-sublabel ${comboCount >= 3 ? 'visible' : ''}`}>
+          GRAVITATIONAL SURGE
+        </div>
+      </div>
+
+      {/* Message Bar */}
+      <div className={`message-bar ${messageClass}`}>
+        {messageText}
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="bottom-bar">
+        <div className="bet-display void-panel" onClick={handleBetClick}>
+          <div className="label">BET</div>
+          <div className="value">${betAmount.toFixed(2)}</div>
+        </div>
+
+        <button
+          className={`spin-button ${isSpinning ? 'spinning' : ''}`}
+          onClick={handleSpin}
+          disabled={!isIdle}
+        >
+          SPIN
+        </button>
+
+        <div className="win-display void-panel">
+          <div className="label">WIN</div>
+          <div className={`value ${winAmount > 0 ? 'has-win' : ''}`}>
+            ${winAmount.toFixed(2)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

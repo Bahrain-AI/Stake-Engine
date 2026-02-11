@@ -155,3 +155,41 @@ export const BLOOM_PARAMS = {
 // Performance
 export const MOBILE_BREAKPOINT = 640;
 export const MAX_PIXEL_RATIO_MOBILE = 1.5;
+
+// Game states
+export const GAME_STATES = {
+  IDLE: 'IDLE',
+  SPINNING: 'SPINNING',
+  RESOLVING: 'RESOLVING',
+  CASCADING: 'CASCADING',
+  WIN_DISPLAY: 'WIN_DISPLAY',
+};
+
+// Cluster detection
+export const MIN_CLUSTER_SIZE = 5;
+
+// Pay table: symbol → cluster size tier → pay multiplier (of bet)
+// Tiers: 5-7, 8-11, 12-15, 16+
+export const PAY_TABLE = {
+  S1_VOID_SHARD:   [0.5,  1.0,   3.0,   10.0],
+  S2_NEBULA_CORE:  [0.5,  1.0,   3.0,   10.0],
+  S3_PLASMA_ORB:   [0.8,  2.0,   5.0,   25.0],
+  S4_STELLAR_FRAG: [1.0,  3.0,   8.0,   50.0],
+  S5_DARK_MATTER:  [1.0,  3.0,   8.0,   50.0],
+  S6_SINGULARITY:  [2.0,  5.0,  15.0,  100.0],
+  S7_NEUTRON:      [3.0,  8.0,  25.0,  200.0],
+};
+
+// Bet amounts
+export const BET_LEVELS = [0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 25.00, 50.00, 100.00];
+export const DEFAULT_BET_INDEX = 2; // $1.00
+
+// Animation durations (seconds)
+export const ANIM = {
+  SPIN_SCATTER_OUT: 0.3,
+  SPIN_SNAP_BACK: 0.4,
+  WIN_GLOW: 0.3,
+  WIN_ABSORB: 0.5,
+  CASCADE_DRIFT: 0.5,
+  CASCADE_SPAWN: 0.3,
+};

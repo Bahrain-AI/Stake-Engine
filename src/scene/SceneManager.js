@@ -63,6 +63,9 @@ export class SceneManager {
     // Singularity meter level (0.0 - 1.0) — wired up for visual escalation
     this.meterLevel = 0;
 
+    // External animation sequencer (set by useGameState)
+    this.animationSequencer = null;
+
     this._initRenderer();
     this._initScene();
     this._initCamera();
@@ -153,6 +156,11 @@ export class SceneManager {
     this.lighting.update(time, delta, this.meterLevel);
     this.grid.update(time, delta, this.meterLevel);
     this.symbols.update(time, delta, this.meterLevel);
+
+    // Update animation sequencer
+    if (this.animationSequencer) {
+      this.animationSequencer.update(delta);
+    }
 
     // Render
     this.composer.render(delta);
