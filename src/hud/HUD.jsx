@@ -18,6 +18,9 @@ export default function HUD({
   bonusActive = false,
   onBonusBuy,
   ehCrackActive = false,
+  muted = false,
+  onMuteToggle,
+  onShowPaytable,
 }) {
   const betAmount = BET_LEVELS[betIndex] || BET_LEVELS[DEFAULT_BET_INDEX];
   const isIdle = gameState === GAME_STATES.IDLE || gameState === GAME_STATES.BONUS_ACTIVE;
@@ -78,6 +81,16 @@ export default function HUD({
     <div className="hud">
       {/* Event Horizon screen crack overlay */}
       <div className={`eh-crack-overlay ${ehCrackActive ? 'active' : ''}`} />
+
+      {/* Top-left controls */}
+      <div className="top-controls">
+        <button className="hud-icon-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
+          {muted ? 'OFF' : 'SFX'}
+        </button>
+        <button className="hud-icon-btn" onClick={onShowPaytable} title="Paytable">
+          INFO
+        </button>
+      </div>
 
       {/* Title */}
       <div className="title-bar">

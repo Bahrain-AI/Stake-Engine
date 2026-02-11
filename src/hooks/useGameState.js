@@ -12,6 +12,8 @@ import { SpinAnimation } from '../animation/SpinAnimation.js';
 import { WinAnimation } from '../animation/WinAnimation.js';
 import { CascadeAnimation } from '../animation/CascadeAnimation.js';
 import { EventHorizonCinematic } from '../animation/EventHorizonCinematic.js';
+import { AudioController } from '../audio/AudioController.js';
+import { BigWinCelebration } from '../animation/BigWinCelebration.js';
 
 /**
  * Core game state hook.
@@ -27,6 +29,7 @@ export function useGameState() {
   const [bonusSpins, setBonusSpins] = useState(0);
   const [showBonusBuy, setShowBonusBuy] = useState(false);
   const [ehCrackActive, setEhCrackActive] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   const stateMachine = useRef(new GameStateMachine()).current;
   const sequencer = useRef(new AnimationSequencer()).current;
@@ -48,6 +51,7 @@ export function useGameState() {
     // Threshold effects
     meter.onThreshold((threshold) => {
       const scene = sceneRef.current;
+      AudioController.playThreshold(threshold);
       if (threshold === 25) {
         multipliers.spawnBubble();
         if (scene) scene.multiplierBubbles.sync(multipliers.activeBubbles);
@@ -72,6 +76,7 @@ export function useGameState() {
     const pct = meter.percent;
     setMeterPercent(pct);
     if (scene) scene.setMeterLevel(pct);
+    AudioController.setDroneLevel(pct);
   }, [meter]);
 
   /** Count scatters in a grid */
@@ -92,6 +97,7 @@ export function useGameState() {
 
     stateMachine.startEventHorizon();
     setEhCrackActive(true);
+    AudioController.playEHBoom();
 
     const cinematic = new EventHorizonCinematic(scene);
     cinematic.onExpandGrid = () => {
@@ -161,6 +167,7 @@ export function useGameState() {
 
     // Spin animation
     const spinAnim = new SpinAnimation(scene.symbols, newGrid);
+    AudioController.playSpin();
     spinAnim.onComplete = () => {
       scene.symbols.applyGrid(newGrid);
       stateMachine.spinComplete();
@@ -210,6 +217,7 @@ export function useGameState() {
           meter.chargeFromClusters(step.clusters);
         }
         syncMeter();
+        AudioController.playMeterCharge();
       }
 
       // Multiplier activation
@@ -230,8 +238,25 @@ export function useGameState() {
 
       function playStep() {
         if (currentStep >= steps.length) {
-          setWinAmount(inBonus ? bonus.totalWin : finalWin);
+          const displayWin = inBonus ? bonus.totalWin : finalWin;
+          setWinAmount(displayWin);
           stateMachine.showWin();
+
+          // Big win check (100x+ bet)
+          const winRatio = displayWin / betAmount;
+          if (winRatio >= 100 && scene) {
+            AudioController.playBigWin();
+            const bigWin = new BigWinCelebration(scene);
+            // Wrap as sequencer-compatible animation
+            const bigWinAnim = {
+              _done: false,
+              start() { bigWin.start(); },
+              update(dt) { bigWin.update(dt); if (bigWin.isComplete()) this._done = true; },
+              isComplete() { return this._done; },
+            };
+            sequencer.playImmediate(bigWinAnim);
+          }
+
           setTimeout(() => {
             // Check for EH trigger (meter hit 100 or scatter)
             if (!inBonus && (ehPending.current || scatterTriggersEH)) {
@@ -247,13 +272,19 @@ export function useGameState() {
             } else {
               stateMachine.returnToIdle(false);
             }
-          }, inBonus ? 800 : 1500);
+          }, winRatio >= 100 ? 3000 : (inBonus ? 800 : 1500));
           return;
         }
 
         const step = steps[currentStep];
         setComboCount(currentStep + 1);
         stateMachine.startCascade();
+        AudioController.playCascade(currentStep + 1);
+
+        // Play win sound for each cluster in this step
+        for (const cluster of step.clusters) {
+          AudioController.playWinCluster(cluster.cells.length);
+        }
 
         const winAnim = new WinAnimation(scene.symbols, step.clusters, scene.blackHole);
         winAnim.onComplete = () => {
@@ -337,6 +368,22 @@ export function useGameState() {
     }
   }, [betIndex, stateMachine, multipliers, meter, syncMeter, triggerEventHorizon]);
 
+  const toggleMute = useCallback(() => {
+    AudioController.toggleMute();
+    setMuted(AudioController.muted);
+  }, []);
+
+  /** Debug: override meter value */
+  const debugSetMeter = useCallback((value) => {
+    meter.set(value);
+    syncMeter();
+  }, [meter, syncMeter]);
+
+  /** Debug: force trigger Event Horizon */
+  const debugTriggerEH = useCallback(() => {
+    if (sceneRef.current) triggerEventHorizon();
+  }, [triggerEventHorizon]);
+
   return {
     gameState,
     comboCount,
@@ -353,5 +400,9 @@ export function useGameState() {
     setShowBonusBuy,
     handleBonusBuy,
     ehCrackActive,
+    muted,
+    toggleMute,
+    debugSetMeter,
+    debugTriggerEH,
   };
 }

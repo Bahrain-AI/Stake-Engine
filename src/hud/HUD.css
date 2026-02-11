@@ -20,6 +20,40 @@
   backdrop-filter: blur(4px);
 }
 
+/* Top-left icon buttons (mute, info) */
+.top-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 15;
+}
+.hud-icon-btn {
+  width: 40px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(107, 31, 177, 0.7);
+  background: rgba(26, 10, 46, 0.5);
+  border: 1px solid rgba(107, 31, 177, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+.hud-icon-btn:hover {
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.4);
+  background: rgba(26, 10, 46, 0.7);
+}
+
 /* Title Bar */
 .title-bar {
   position: absolute;
@@ -466,6 +500,8 @@
 
 /* Mobile adaptations */
 @media (max-width: 640px) {
+  .top-controls { top: 10px; left: 10px; gap: 6px; }
+  .hud-icon-btn { width: 34px; height: 24px; font-size: 7px; }
   .title-bar h1 { font-size: 22px; letter-spacing: 6px; }
   .title-bar .subtitle { font-size: 7px; letter-spacing: 4px; }
   .combo-counter { right: 8px; padding: 10px 8px; min-width: 50px; }
