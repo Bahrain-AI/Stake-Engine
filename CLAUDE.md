@@ -23,6 +23,8 @@ npm run build        # Production build → dist/
 npm run preview      # Preview production build
 ```
 
+No test runner or linter is configured. There are no test files.
+
 ## Architecture
 
 ### Rendering Pipeline
@@ -45,6 +47,7 @@ Single `requestAnimationFrame` loop drives everything sequentially:
 - `src/audio/` — Audio controller, SFX mappings
 - `src/hooks/` — `useGameState`, `useThreeScene`, `useResponsive`
 - `src/utils/` — Constants, grid helpers (`gridToWorld`), math helpers
+- `docs/` — Stake Engine RGS API and Math SDK integration docs (reference for backend wiring)
 
 ### Key Concepts
 
@@ -52,7 +55,7 @@ Single `requestAnimationFrame` loop drives everything sequentially:
 
 **Visual Escalation:** Environment transforms based on Singularity Meter level (0-100%). Lighting colors, particle speeds, bloom strength, symbol emissive intensity, and gravitational pull all scale with meter. This is wired up from Phase 1 even before the meter itself is implemented.
 
-**State Machine:** idle → spinning → resolving → cascading → win → idle
+**State Machine:** `IDLE → SPINNING → RESOLVING → CASCADING → WIN_DISPLAY → IDLE` (also `EVENT_HORIZON`, `BONUS_ACTIVE`). Full constants and numeric values (pay tables, bet levels, animation durations, particle counts) are in `src/utils/constants.js` — always check there before hardcoding values.
 
 ## Critical Rules
 
@@ -82,8 +85,8 @@ Single `requestAnimationFrame` loop drives everything sequentially:
 ## Skill Files
 
 The `SKILL.md` files in the repo root are design specs — reference them for exact values:
-- **pixi-slot-frontend** — File structure, rendering pipeline, grid math, dependencies, animation sequencer
-- **slot-visual-designer** — Scene graph, symbol geometry table, particle counts, post-processing, visual escalation levels
-- **slot-ui-components** — HUD layout, typography, component specs, responsive breakpoints
-- **slot-prototype-helper** — Mock outcome generator, debug panel, test checklists, performance budgets
-- **slot-game-planner** — (duplicate of visual-designer currently)
+- `SKILL.md — pixi-slot-frontend (VOID BREAK).md` — File structure, rendering pipeline, grid math, dependencies, animation sequencer
+- `SKILL.md — slot-visual-designer (VOID BREAK).md` — Scene graph, symbol geometry table, particle counts, post-processing, visual escalation levels
+- `SKILL.md — slot-ui-components (VOID BREAK).md` — HUD layout, typography, component specs, responsive breakpoints
+- `SKILL.md — slot-prototype-helper (VOID BREAK).md` — Mock outcome generator, debug panel, test checklists, performance budgets
+- `SKILL.md — slot-game-planner (VOID BREAK).md` — (duplicate of visual-designer currently)
