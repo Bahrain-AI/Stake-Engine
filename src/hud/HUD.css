@@ -217,6 +217,92 @@
 .message-bar.win { color: #00d4ff; }
 .message-bar.no-win { color: rgba(107, 31, 177, 0.5); }
 
+/* Singularity Meter — left side vertical bar */
+.singularity-meter {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  min-width: 52px;
+}
+.meter-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 8px;
+  color: #00d4ff;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.meter-track {
+  position: relative;
+  width: 8px;
+  height: 180px;
+  background: rgba(26, 10, 46, 0.8);
+  border: 1px solid rgba(107, 31, 177, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.meter-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  transition: height 0.5s ease, background 0.5s ease, box-shadow 0.5s ease;
+}
+.meter-fill.level-0 {
+  background: linear-gradient(to top, #1a0a2e, #6b1fb1);
+}
+.meter-fill.level-1 {
+  background: linear-gradient(to top, #6b1fb1, #00d4ff);
+}
+.meter-fill.level-2 {
+  background: linear-gradient(to top, #6b1fb1, #00d4ff);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+.meter-fill.level-3 {
+  background: linear-gradient(to top, #ff006e, #ff4466);
+  box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+  animation: meterPulse 0.5s infinite alternate;
+}
+@keyframes meterPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 0, 110, 0.4); }
+  100% { box-shadow: 0 0 20px rgba(255, 0, 110, 0.8); }
+}
+.meter-thresholds {
+  position: absolute;
+  top: 0;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  pointer-events: none;
+}
+.meter-tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(107, 31, 177, 0.5);
+}
+.meter-tick.t25 { bottom: 25%; }
+.meter-tick.t50 { bottom: 50%; }
+.meter-tick.t75 { bottom: 75%; }
+.meter-percent {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 8px;
+  transition: color 0.5s ease;
+}
+.meter-percent.level-0 { color: #6b1fb1; }
+.meter-percent.level-1 { color: #00d4ff; }
+.meter-percent.level-2 { color: #00d4ff; }
+.meter-percent.level-3 { color: #ff006e; }
+
 /* Mobile adaptations */
 @media (max-width: 640px) {
   .title-bar h1 { font-size: 22px; letter-spacing: 6px; }
@@ -228,4 +314,7 @@
   .bet-display, .win-display { min-width: 80px; padding: 8px 12px; }
   .bet-display .value, .win-display .value { font-size: 14px; }
   .message-bar { font-size: 10px; bottom: 75px; }
+  .singularity-meter { left: 8px; padding: 8px 4px; min-width: 40px; }
+  .meter-track { height: 120px; }
+  .meter-percent { font-size: 10px; }
 }

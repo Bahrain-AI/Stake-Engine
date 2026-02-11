@@ -21,6 +21,7 @@ import { LightingSystem } from './LightingSystem.js';
 import { GridRenderer } from './GridRenderer.js';
 import { SymbolManager } from './SymbolManager.js';
 import { VisualEscalation } from './VisualEscalation.js';
+import { MultiplierBubbles } from './MultiplierBubbles.js';
 
 // Vignette shader
 const VignetteShader = {
@@ -129,6 +130,7 @@ export class SceneManager {
     this.lighting = new LightingSystem(this.scene);
     this.grid = new GridRenderer(this.scene);
     this.symbols = new SymbolManager(this.scene);
+    this.multiplierBubbles = new MultiplierBubbles(this.scene);
     this.escalation = new VisualEscalation(this);
   }
 
@@ -145,9 +147,13 @@ export class SceneManager {
     this.elapsedTime += delta;
     const time = this.elapsedTime;
 
-    // Camera sway
-    this.camera.position.x = Math.sin(time * CAMERA_SWAY_X_SPEED) * CAMERA_SWAY_X_AMP;
-    this.camera.position.y = Math.cos(time * CAMERA_SWAY_Y_SPEED) * CAMERA_SWAY_Y_AMP;
+    // Visual escalation per-frame (screen shake)
+    this.escalation.updateFrame(time, delta, this.meterLevel);
+
+    // Camera sway + screen shake offset
+    const shake = this.escalation.cameraShakeOffset;
+    this.camera.position.x = Math.sin(time * CAMERA_SWAY_X_SPEED) * CAMERA_SWAY_X_AMP + shake.x;
+    this.camera.position.y = Math.cos(time * CAMERA_SWAY_Y_SPEED) * CAMERA_SWAY_Y_AMP + shake.y;
     this.camera.lookAt(0, 0, 0);
 
     // Update subsystems
@@ -156,6 +162,7 @@ export class SceneManager {
     this.lighting.update(time, delta, this.meterLevel);
     this.grid.update(time, delta, this.meterLevel);
     this.symbols.update(time, delta, this.meterLevel);
+    this.multiplierBubbles.update(time, delta);
 
     // Update animation sequencer
     if (this.animationSequencer) {
@@ -194,6 +201,8 @@ export class SceneManager {
     this.lighting.dispose();
     this.grid.dispose();
     this.symbols.dispose();
+    this.multiplierBubbles.dispose();
+    this.escalation.dispose();
 
     this.composer.dispose();
     this.renderer.dispose();

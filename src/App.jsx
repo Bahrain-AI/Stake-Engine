@@ -15,6 +15,7 @@ export default function App() {
     spin,
     setScene,
     sequencer,
+    meterPercent,
   } = useGameState();
 
   // Wire scene manager to game state once scene is ready
@@ -51,6 +52,7 @@ export default function App() {
         winAmount={winAmount}
         betIndex={betIndex}
         onBetChange={setBetIndex}
+        meterPercent={meterPercent}
       />
     </div>
   );

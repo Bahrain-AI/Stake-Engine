@@ -4,6 +4,8 @@ import { GameStateMachine } from '../engine/GameStateMachine.js';
 import { generateGrid } from '../engine/MockOutcomeGen.js';
 import { resolveCascades } from '../engine/CascadeResolver.js';
 import { calculateTotalWin } from '../engine/PayCalculator.js';
+import { SingularityMeter } from '../engine/SingularityMeter.js';
+import { MultiplierSystem } from '../engine/MultiplierSystem.js';
 import { AnimationSequencer } from '../animation/AnimationSequencer.js';
 import { SpinAnimation } from '../animation/SpinAnimation.js';
 import { WinAnimation } from '../animation/WinAnimation.js';
@@ -12,15 +14,19 @@ import { CascadeAnimation } from '../animation/CascadeAnimation.js';
 /**
  * Core game state hook.
  * Connects engine logic → animation sequencer → 3D scene.
+ * Integrates SingularityMeter and MultiplierSystem.
  */
 export function useGameState() {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [comboCount, setComboCount] = useState(0);
   const [winAmount, setWinAmount] = useState(0);
   const [betIndex, setBetIndex] = useState(DEFAULT_BET_INDEX);
+  const [meterPercent, setMeterPercent] = useState(0);
 
   const stateMachine = useRef(new GameStateMachine()).current;
   const sequencer = useRef(new AnimationSequencer()).current;
+  const meter = useRef(new SingularityMeter()).current;
+  const multipliers = useRef(new MultiplierSystem()).current;
   const sceneRef = useRef(null);
 
   // Bind state machine changes to React state
@@ -30,11 +36,43 @@ export function useGameState() {
     stateMachine.onChange((newState) => {
       setGameState(newState);
     });
+
+    // Threshold effects
+    meter.onThreshold((threshold) => {
+      const scene = sceneRef.current;
+      if (threshold === 25) {
+        // Spawn a multiplier bubble
+        multipliers.spawnBubble();
+        if (scene) {
+          scene.multiplierBubbles.sync(multipliers.activeBubbles);
+        }
+      } else if (threshold === 50) {
+        // Gravitational wilds: 1-3 wilds placed on grid
+        // (Visual only in Phase 3 — actual wild placement needs mock grid mutation)
+      } else if (threshold === 75) {
+        // Double all active multiplier bubbles
+        multipliers.doubleAll();
+        if (scene) {
+          scene.multiplierBubbles.sync(multipliers.activeBubbles);
+        }
+      }
+      // threshold 100 = Event Horizon (Phase 4)
+    });
   }
 
   const setScene = useCallback((scene) => {
     sceneRef.current = scene;
   }, []);
+
+  /** Update meter display on scene + React state */
+  const syncMeter = useCallback(() => {
+    const scene = sceneRef.current;
+    const pct = meter.percent;
+    setMeterPercent(pct);
+    if (scene) {
+      scene.setMeterLevel(pct);
+    }
+  }, [meter]);
 
   const spin = useCallback(() => {
     const scene = sceneRef.current;
@@ -44,6 +82,11 @@ export function useGameState() {
     const betAmount = BET_LEVELS[betIndex];
     setWinAmount(0);
     setComboCount(0);
+
+    // Decrement multiplier bubble lifespans
+    multipliers.onSpin();
+    multipliers.updateOrbits(0);
+    scene.multiplierBubbles.sync(multipliers.activeBubbles);
 
     // Generate new outcome
     const newGrid = generateGrid();
@@ -58,7 +101,10 @@ export function useGameState() {
       const steps = resolveCascades(newGrid);
 
       if (steps.length === 0) {
-        // No wins — show void silence
+        // No wins — decay meter
+        meter.decay();
+        syncMeter();
+
         stateMachine.showWin();
         setTimeout(() => {
           stateMachine.returnToIdle();
@@ -69,13 +115,31 @@ export function useGameState() {
       // Calculate wins
       const { totalWin } = calculateTotalWin(steps, betAmount);
 
+      // Charge meter from all clusters in all cascade steps
+      for (const step of steps) {
+        meter.chargeFromClusters(step.clusters);
+      }
+      syncMeter();
+
+      // Check multiplier activation against winning clusters
+      let multiplierBonus = 1;
+      for (const step of steps) {
+        for (const cluster of step.clusters) {
+          const result = multipliers.checkActivation(cluster.cells);
+          multiplierBonus *= result.totalMultiplier;
+        }
+      }
+      scene.multiplierBubbles.sync(multipliers.activeBubbles);
+
+      const finalWin = totalWin * multiplierBonus;
+
       // Animate each cascade step sequentially
       let currentStep = 0;
 
       function playStep() {
         if (currentStep >= steps.length) {
           // All cascades done — show total win
-          setWinAmount(totalWin);
+          setWinAmount(finalWin);
           stateMachine.showWin();
           setTimeout(() => {
             stateMachine.returnToIdle();
@@ -107,7 +171,7 @@ export function useGameState() {
     };
 
     sequencer.playImmediate(spinAnim);
-  }, [betIndex, stateMachine, sequencer]);
+  }, [betIndex, stateMachine, sequencer, meter, multipliers, syncMeter]);
 
   return {
     gameState,
@@ -118,5 +182,6 @@ export function useGameState() {
     spin,
     setScene,
     sequencer,
+    meterPercent,
   };
 }

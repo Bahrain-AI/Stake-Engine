@@ -6,7 +6,7 @@ import './HUD.css';
  * HUD overlay — HTML/CSS over the Three.js canvas.
  * All game state displayed here, imperative updates from game loop.
  */
-export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex, onBetChange }) {
+export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex, onBetChange, meterPercent = 0 }) {
   const betAmount = BET_LEVELS[betIndex] || BET_LEVELS[DEFAULT_BET_INDEX];
   const isIdle = gameState === GAME_STATES.IDLE;
   const isSpinning = gameState === GAME_STATES.SPINNING;
@@ -65,6 +65,25 @@ export default function HUD({ gameState, onSpin, comboCount, winAmount, betIndex
       <div className="title-bar">
         <h1>VOID BREAK</h1>
         <div className="subtitle">GRAVITATIONAL SLOT EXPERIENCE</div>
+      </div>
+
+      {/* Singularity Meter — left side */}
+      <div className="singularity-meter void-panel">
+        <div className="meter-label">SINGULARITY</div>
+        <div className="meter-track">
+          <div
+            className={`meter-fill level-${meterPercent >= 0.75 ? 3 : meterPercent >= 0.5 ? 2 : meterPercent >= 0.25 ? 1 : 0}`}
+            style={{ height: `${meterPercent * 100}%` }}
+          />
+          <div className="meter-thresholds">
+            <div className="meter-tick t25" />
+            <div className="meter-tick t50" />
+            <div className="meter-tick t75" />
+          </div>
+        </div>
+        <div className={`meter-percent level-${meterPercent >= 0.75 ? 3 : meterPercent >= 0.5 ? 2 : meterPercent >= 0.25 ? 1 : 0}`}>
+          {Math.round(meterPercent * 100)}%
+        </div>
       </div>
 
       {/* Combo Counter */}
